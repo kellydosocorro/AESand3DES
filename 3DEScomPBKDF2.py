@@ -12,11 +12,10 @@ from cryptography.hazmat.primitives import padding
 # ==================================================================== #
 
 # Cria a função de preenchimento do bloco com o padder
-padder = padding.PKCS7(128).padder()
+padder = padding.PKCS7(algorithms.TripleDES.block_size).padder()
 
 # Cria a função de remoção do preenchimento do bloco com o unpadder
-unpadder = padding.PKCS7(128).unpadder()
-
+unpadder = padding.PKCS7(algorithms.TripleDES.block_size).unpadder()
 
 # ==================================================================== #
 #   Derivando a chave dada uma senha                                   #
@@ -31,10 +30,10 @@ def gerador_chave():
 
     senha = bytes(input("Insira uma senha: "), 'utf-8') # Captura a senha do usuário
 
-    salt_iv = secrets.token_bytes(16) # Gera um salt aleatório de 16 bytes
+    salt_iv = secrets.token_bytes(8) # Gera um salt aleatório de 16 bytes
 
     kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), # Define o SHA256 como algotitmo de hash
-                 length=32, # Tamanho da chave gerada
+                 length=16, # Tamanho da chave gerada
                  salt=salt_iv, # Salt aleatório gerado anteriormente
                  iterations=1000, # Numéro de iterações que ele irá realizar
                  backend=default_backend()) 
@@ -44,23 +43,14 @@ def gerador_chave():
     return chave
 
 # ==================================================================== #
-#   AES e todos os seus modos                                          #
+#   3DES                                                               #
 # ==================================================================== #
 
-def AES_ECB(chave):
-    return Cipher(algorithms.AES(chave), modes.ECB(), backend=default_backend())
+def Triple_DES_ECB(chave):
+    return Cipher(algorithms.TripleDES(chave), modes.ECB(), backend=default_backend())
 
-def AES_CBC(chave, iv_criptografado):   
-    return Cipher(algorithms.AES(chave), modes.CBC(iv_criptografado), backend=default_backend())
-
-def AES_CFB(chave, iv_criptografado):   
-    return Cipher(algorithms.AES(chave), modes.CFB(iv_criptografado), backend=default_backend())
-
-def AES_OFB(chave, nounce):
-        return Cipher(algorithms.AES(chave), modes.OFB(nounce), backend=default_backend())
-
-def AES_CTR(chave, nounce):
-    return Cipher(algorithms.AES(chave), modes.CTR(nounce), backend=default_backend())
+def Triple_DES_CBC(chave, iv_criptografado):   
+    return Cipher(algorithms.TripleDES(chave), modes.CBC(iv_criptografado), backend=default_backend())
 
 # ==================================================================== #
 #   Fluxo principal                                                    #
@@ -68,16 +58,16 @@ def AES_CTR(chave, nounce):
 
 def main():
 
-    print("CRIPTOGRAFIA AES no modo CBC\n")
+    print("CRIPTOGRAFIA 3DES no modo CBC\n")
 
     # Gera a chave a partir de uma senha
     chave = gerador_chave() 
     
     # Gera o vetor de inicialização
-    iv = secrets.token_bytes(16)
+    iv = secrets.token_bytes(8)
 
     # Cria a cifra com algoritmo AES no modo ECB
-    cifraECB = AES_ECB(chave)
+    cifraECB = Triple_DES_ECB(chave)
 
     # Instancia o método de encriptar
     encriptografa = cifraECB.encryptor()
@@ -89,7 +79,7 @@ def main():
     iv_ct = encriptografa.update(iv) 
 
     # Definindo a cifra
-    cifra = AES_CBC(chave, descriptografa.update(iv_ct))
+    cifra = Triple_DES_CBC(chave, descriptografa.update(iv_ct))
 
     # Instancia o método de encriptação
     encryptor = cifra.encryptor()
